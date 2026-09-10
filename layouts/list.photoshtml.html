@@ -1,0 +1,16 @@
+{{ define "main" }}
+{{ $pages := where (where .Site.RegularPages "Type" "post") ".Params.photos" "!=" nil }}
+
+<div class="content">
+	<div class="photo-grid">
+		{{ range $pages }}
+			{{ $post := . }}
+			{{ range .Params.photos }}
+			<a class="photo-grid-item" href="{{ $post.Permalink }}">
+				<img src="{{ . }}" alt="" loading="lazy">
+			</a>
+			{{ end }}
+		{{ end }}
+	</div>
+</div>
+{{ end }}
