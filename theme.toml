@@ -1,11 +1,11 @@
-name = "Forever Theme for micro.blog"
+name = "Custom Theme"
 license = "MIT"
 licenselink = "LICENSE"
-description = "A classic blogging theme for Micro.blog."
-homepage = "https://github.com/jliikala/forever-theme"
+description = "A minimal starting point for a Micro.blog theme."
+homepage = "https://github.com/yourusername/yourtheme"
 tags = ["blog", "microblog"]
 features = []
-min_version = "0.158"
+min_version = "0.91"
 
 [author]
   name = "Juha Liikala"

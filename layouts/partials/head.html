@@ -6,7 +6,7 @@
 {{ if .Description }}
 <meta name="description" content="{{ .Description }}">
 {{ else if .Site.Params.description }}
-<meta name="description" content="{{ .Site.Params.description }}">
+<meta name="description" content="{{ .Site.Params.description | plainify }}">
 {{ end }}
 
 <link rel="stylesheet" href="{{ "custom.css" | relURL }}?{{ .Site.Params.theme_seconds }}">

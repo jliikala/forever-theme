@@ -4,7 +4,7 @@
 	{{ end }}
 	<p class="p-name">{{ .Site.Params.author.name | default .Site.Title }}</p>
 	{{ with .Site.Params.description }}
-	<p class="p-note">{{ . }}</p>
+	<p class="p-note">{{ . | safeHTML }}</p>
 	{{ end }}
 	<a class="u-url" href="{{ .Site.BaseURL }}">{{ .Site.BaseURL }}</a>
 </div>

@@ -15,7 +15,7 @@ layouts/
   index.html                      # homepage — MUST be root-level, see note below
   index.xml                       # feed.xml — MUST be root-level
   index.json                      # feed.json — MUST be root-level
-  list.archivehtml.html           # /archive/ — MUST be root-level
+  list.archivehtml.html           # /archive/ — kept at root AND in _default/, see note below
   404.html                        # 404 page — no sidebar, root-level (Blank has none, so no shadowing risk)
   post/
     single.html                   # single post (Type "post") — MUST be under post/, two-column layout
@@ -23,6 +23,7 @@ layouts/
     baseof.html                   # base template: head + header + {{ block "main" }} + footer
     single.html                   # fallback single template (non-post content, e.g. pages) — no sidebar
     list.html                     # fallback list template (taxonomy/category pages) — two-column layout
+    list.archivehtml.html         # /archive/ — see note below; this copy is the one that actually renders
   partials/
     layout-two-column.html        # content + positioned sidebar wrapper
     sidebar.html                  # sidebar content — defaults to an h-card identity block
@@ -32,8 +33,21 @@ layouts/
     header.html                   # site title + subtitle
     footer.html                   # copyright line
     custom_footer.html            # empty hook for Micro.blog's custom-footer mechanism
+static/
+  custom.css                      # structural base styles — layout, no colors/typography/branding yet
 plugin.json                       # exposes the sidebar-position toggle as a settings-page field
 ```
+
+### `static/custom.css` vs. Micro.blog's "Edit CSS" button
+
+Micro.blog's Design page shows an "Edit CSS" button next to the
+active theme, editing a file also called `custom.css`. The exact
+relationship between that in-browser editor and this repo's
+`static/custom.css` isn't fully confirmed here — most likely the
+editor is either backed by this same file (edits there would need
+syncing back to git) or is a separate override layer on top of it.
+Worth clarifying by testing: edit a line via "Edit CSS" on the live
+site and see whether it shows up in a subsequent theme export.
 
 ### Why some templates must live at the root, not under `_default/`
 
@@ -45,34 +59,65 @@ subtlety: **path specificity is checked before layer priority.** If
 Blank defines a *more specific* path than the one you used, Blank's
 file wins even though your repo is layered on top of Blank overall.
 
-Micro.blog's actual Blank design (per its own theme-file listing, not
-just its older public GitHub mirror) defines these at the *root*
-`layouts/` level, not `_default/`:
+This applies to the site's **home page** (Kind `home`), where Hugo
+genuinely checks root-level `layouts/index.html` before falling back
+to `_default/`. Micro.blog's actual Blank design defines these at the
+*root* `layouts/` level:
 
 - `layouts/index.html` (homepage)
 - `layouts/index.xml` (RSS)
 - `layouts/index.json` (JSON feed)
-- `layouts/list.archivehtml.html` (archive)
 - `layouts/post/single.html` (single post, for content of Type "post" —
   which is most Micro.blog content)
 
 If this theme only defined `_default/list.html`, `_default/single.html`,
 etc., Blank's more specific root-level versions would have silently
-taken precedence for the homepage, RSS, JSON feed, archive, and every
-post-type single page — meaning almost none of this theme's own markup
-would actually have rendered. So this theme now mirrors Blank's own
-file structure exactly for those five templates, and reserves
-`_default/list.html` / `_default/single.html` for what they still
-correctly handle: taxonomy/category list pages and non-post content
-(e.g. standalone pages) respectively. The list/single markup itself is
-factored into `partials/entry-list.html` and `partials/entry-single.html`
-so both the root-level and `_default/` versions share one
-implementation instead of drifting apart.
+taken precedence for the homepage, RSS, JSON feed, and every post-type
+single page. So this theme mirrors Blank's own file structure exactly
+for those four, and reserves `_default/list.html` / `_default/single.html`
+for what they still correctly handle: taxonomy/category list pages and
+non-post content (e.g. standalone pages) respectively.
 
-When adding any new template later, check Micro.blog's own Blank
-theme-file listing (Design → Edit Custom Themes → Blank) for whether
-it defines that same file at root level — if it does, yours needs to
-match that exact path to actually take effect.
+### The archive page is a different mechanism entirely
+
+Initially we assumed `/archive/` was produced the same root-vs-`_default`
+way, via the `ArchiveHTML` entry in `config.json`'s `outputFormats`.
+It isn't — local testing showed `/archive/` actually falls back all the
+way to the generic single-page template. The real mechanism, confirmed
+by inspecting an exported `content/archive.md`, is a literal content
+page with explicit front matter:
+
+```yaml
+title: "Archive"
+type: archive
+layout: list.archivehtml
+url: /archive/
+```
+
+That's Hugo's ordinary **type + explicit layout** template lookup for
+a regular page (`layouts/<type>/<layout>.html`, then
+`layouts/_default/<layout>.html`) — a completely different lookup
+chain from the home-page one above, and it does *not* have a
+bare-root fallback the way `index.html` does. So the file that
+actually renders `/archive/` is `layouts/_default/list.archivehtml.html`,
+not the root-level copy. This theme keeps a copy at
+`layouts/list.archivehtml.html` too, matching what Blank itself
+ships (both locations) — presumably for compatibility across Hugo
+versions where this lookup behavior may have shifted — but the
+`_default/` copy is the one doing the work. If you only edit one of
+them, edit `_default/`.
+
+The `ArchiveHTML`/`ArchiveJSON` entries in `config.json` may be
+legacy/unused for this — `outputs.page` only allows `HTML` anyway, so
+an `ArchiveJSON` output through that mechanism wouldn't be reachable
+for a literal page. Left them in since they're harmless and Blank
+ships them, but don't rely on them for anything.
+
+When adding any new template later, don't assume root-vs-`_default`
+purely from Blank's file listing — check whether the content it
+renders is the actual home page (root-sensitive) or a literal content
+page with its own `type`/`layout` front matter (type+layout lookup,
+`_default/` is what matters, root is just a compatibility copy).
 
 ## Content + sidebar layout
 
@@ -96,6 +141,13 @@ Style the two arrangements with CSS, e.g.:
 .layout--sidebar-left  { flex-direction: row-reverse; }
 .layout--sidebar-right { flex-direction: row; }
 ```
+
+`static/custom.css` already implements this (plus a mobile breakpoint
+that stacks content above sidebar below 640px, regardless of the
+configured position — content-first reads better on narrow screens
+than sidebar-first). It's deliberately unopinionated beyond structure:
+no color palette, typography, or spacing scale — a foundation to
+design on top of, not a finished look.
 
 `_default/single.html` (the fallback for non-post content — in
 practice, standalone pages, since Blank has no more specific
@@ -176,17 +228,48 @@ production.
 ## Local development
 
 Rather than waiting 5–10 minutes per push for Micro.blog to rebuild,
-develop against a local Hugo instance:
+develop against a local Hugo instance matching the exact version set
+in Design → Hugo Version on your blog.
 
-1. Install Hugo locally, matching the exact version set in Design →
-   Hugo Version on your blog (or use a pinned Docker image, e.g.
-   `klakegg/hugo:0.158.0`, if you don't want that version installed
-   globally).
-2. From any Micro.blog dashboard page, use the "..." menu → Export →
+**Installing a pinned Hugo version on macOS:** Hugo's macOS releases
+are signed `.pkg` installers, not tarballs — `hugo_extended_<version>
+_darwin-universal.pkg` (skip `_withdeploy` unless you use `hugo
+deploy`). Find the exact asset URL for your target version via
+GitHub's API rather than guessing the filename (naming has changed
+across Hugo versions):
+
+```bash
+curl -s https://api.github.com/repos/gohugoio/hugo/releases/tags/v0.158.0 \
+  | grep browser_download_url | grep -i darwin
+```
+
+Install it (`sudo installer -pkg <file>.pkg -target /`, or
+double-click). This writes to `/usr/local/bin/hugo`, which on Apple
+Silicon usually sits *after* Homebrew's `/opt/homebrew/bin` in `PATH`
+— so it won't silently replace a `brew`-installed `hugo`. Verify with
+`which -a hugo` and `/usr/local/bin/hugo version`. To get a
+version-tagged command without relying on `PATH` order:
+
+```bash
+mkdir -p ~/bin
+ln -sf /usr/local/bin/hugo ~/bin/hugo-0.158
+```
+
+Note that a later `.pkg` install of a *different* version overwrites
+`/usr/local/bin/hugo` again, so `hugo-0.158` would need re-linking if
+you ever pin a second version this way. If you'd rather sidestep all
+of this, a pinned Docker image (e.g. `klakegg/hugo:0.158.0`) avoids
+touching the local install entirely — trade-off is the usual Docker
+overhead for a one-off theme project.
+
+Once you have the right `hugo` (or `hugo-0.158`) in hand:
+
+1. From any Micro.blog dashboard page, use the "..." menu → Export →
    "Export theme and Markdown". You'll get an emailed link to a zip.
-3. Copy the `content/` folder from that export into this repo.
-4. Run `hugo serve` and iterate locally with instant reloads.
-5. Commit, push, then use the sync button under Design → Edit Themes
+2. Copy the `content/` folder from that export into this repo.
+3. Run `hugo-0.158 serve` (or whatever you named it) and iterate
+   locally with instant reloads.
+4. Commit, push, then use the sync button under Design → Edit Themes
    → your theme name to pull the changes into Micro.blog.
 
 ## Hugo version
