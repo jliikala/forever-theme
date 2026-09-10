@@ -9,12 +9,11 @@ plug-in hooks, replies) work correctly.
 
 ```
 theme.toml                        # meta info shown on import
-config.json                       # theme-level Hugo config (kept minimal —
-                                   # Micro.blog manages most site settings itself)
+config.json                       # minimal: paginate + this theme's own params only —
+                                   # NEVER redeclare outputFormats/mediaTypes/taxonomies,
+                                   # see note below
 layouts/
   index.html                      # homepage — MUST be root-level, see note below
-  index.xml                       # feed.xml — MUST be root-level
-  index.json                      # feed.json — MUST be root-level
   list.archivehtml.html           # /archive/ — kept at root AND in _default/, see note below
   404.html                        # 404 page — no sidebar, root-level (Blank has none, so no shadowing risk)
   post/
@@ -29,25 +28,32 @@ layouts/
     sidebar.html                  # sidebar content — defaults to an h-card identity block
     entry-list.html                # shared post-list markup (h-feed), used by index.html and _default/list.html
     entry-single.html               # shared single-post markup (h-entry), used by post/single.html and _default/single.html
-    head.html                     # <head>: custom.css, IndieWeb tags, plug-in CSS/HTML hooks
+    head.html                     # <head>: theme CSS + custom.css, IndieWeb tags, plug-in CSS/HTML hooks
     header.html                   # site title + subtitle
     footer.html                   # copyright line
     custom_footer.html            # empty hook for Micro.blog's custom-footer mechanism
 static/
-  custom.css                      # structural base styles — layout, no colors/typography/branding yet
+  css/
+    main.css                       # this theme's own base styles — layout, no colors/typography/branding yet
 plugin.json                       # exposes the sidebar-position toggle as a settings-page field
 ```
 
-### `static/custom.css` vs. Micro.blog's "Edit CSS" button
+### `css/main.css` vs. Micro.blog's "Edit CSS" / `custom.css`
 
-Micro.blog's Design page shows an "Edit CSS" button next to the
-active theme, editing a file also called `custom.css`. The exact
-relationship between that in-browser editor and this repo's
-`static/custom.css` isn't fully confirmed here — most likely the
-editor is either backed by this same file (edits there would need
-syncing back to git) or is a separate override layer on top of it.
-Worth clarifying by testing: edit a line via "Edit CSS" on the live
-site and see whether it shows up in a subsequent theme export.
+Confirmed by inspecting Sumo's own source (`static/css/main.css`,
+`static/css/all.min.css`, linked via `{{ "css/main.css" | relURL }}`):
+`custom.css` is not a theme's own stylesheet — it's Micro.blog's
+platform-wide small-override layer, edited via the "Edit CSS" button
+in Design, independent of whichever theme is active. Every blog gets
+one `/custom.css`, regardless of theme.
+
+This theme's own styles live in `static/css/main.css` (→ `/css/main.css`),
+linked first in `head.html`; `custom.css` is linked right after it, so
+anything a site owner adds via "Edit CSS" naturally overrides this
+theme's defaults without needing to touch the theme's code. Don't put
+this theme's actual styles in a file literally named `custom.css` —
+that name is reserved for the per-site override layer, not per-theme
+defaults, and the two are not interchangeable despite the similar name.
 
 ### Why some templates must live at the root, not under `_default/`
 
@@ -65,10 +71,12 @@ to `_default/`. Micro.blog's actual Blank design defines these at the
 *root* `layouts/` level:
 
 - `layouts/index.html` (homepage)
-- `layouts/index.xml` (RSS)
-- `layouts/index.json` (JSON feed)
 - `layouts/post/single.html` (single post, for content of Type "post" —
   which is most Micro.blog content)
+
+This theme does *not* ship `index.xml` / `index.json` (RSS/JSON feeds)
+— see the note below on why those are intentionally left to Micro.blog's
+own ambient templates.
 
 If this theme only defined `_default/list.html`, `_default/single.html`,
 etc., Blank's more specific root-level versions would have silently
@@ -107,17 +115,50 @@ versions where this lookup behavior may have shifted — but the
 `_default/` copy is the one doing the work. If you only edit one of
 them, edit `_default/`.
 
-The `ArchiveHTML`/`ArchiveJSON` entries in `config.json` may be
-legacy/unused for this — `outputs.page` only allows `HTML` anyway, so
-an `ArchiveJSON` output through that mechanism wouldn't be reachable
-for a literal page. Left them in since they're harmless and Blank
-ships them, but don't rely on them for anything.
+The `ArchiveHTML`/`ArchiveJSON` output-format mechanism turned out to
+be unnecessary for us to declare ourselves — see the note below on
+`config.json` about why this theme doesn't define output formats at
+all.
 
 When adding any new template later, don't assume root-vs-`_default`
 purely from Blank's file listing — check whether the content it
 renders is the actual home page (root-sensitive) or a literal content
 page with its own `type`/`layout` front matter (type+layout lookup,
 `_default/` is what matters, root is just a compatibility copy).
+
+### `config.json` stays minimal — don't redeclare output formats
+
+Earlier drafts of this theme copied Blank's full `outputFormats` /
+`mediaTypes` / `outputs` / `taxonomies` block into this theme's own
+`config.json`, reasoning that Micro.blog merges the theme's config
+with Blank's. That caused a real, confirmed production bug: RSS output
+(`feed.xml`) got HTML-escaped where it shouldn't have been (`+0300`
+turning into `&#43;0300` in `<pubDate>`, double-escaped HTML in
+`<description>`), because redeclaring `outputFormats.RSS` — even
+partially, just to set `baseName` — replaced Hugo's built-in RSS
+format definition wholesale, losing its `isPlainText: true` and
+causing Hugo to run the output through HTML auto-escaping instead of
+treating it as plain text.
+
+Inspecting Sumo's own GitHub source settled it: Sumo's entire
+`config.json` is `{ "paginate": 20 }` — nothing about output formats,
+media types, or taxonomies. Micro.blog supplies all of that ambient
+platform config automatically, for every theme, regardless of what
+the theme's own `config.json` contains. A theme should only add
+config for things it's genuinely changing. So this theme's
+`config.json` now only carries `paginate` and this theme's own
+`sidebar_left` param — nothing that redeclares or shadows platform
+plumbing.
+
+**Consequence for local testing:** without Micro.blog's ambient
+config layered in, a bare local `hugo serve` using only this repo's
+minimal `config.json` won't know what `RSS`/`JSON`/`ArchiveHTML`
+output formats mean, and `/feed.xml`, `/feed.json`, `/archive/` will
+404. That's expected and not a bug — see "Local development" below:
+always test locally against a real exported `config.json` via
+`--config`, which already carries the full ambient definitions
+Micro.blog actually uses, rather than trying to reconstruct them in
+this theme's own file.
 
 ## Content + sidebar layout
 
@@ -142,7 +183,7 @@ Style the two arrangements with CSS, e.g.:
 .layout--sidebar-right { flex-direction: row; }
 ```
 
-`static/custom.css` already implements this (plus a mobile breakpoint
+`static/css/main.css` already implements this (plus a mobile breakpoint
 that stacks content above sidebar below 640px, regardless of the
 configured position — content-first reads better on narrow screens
 than sidebar-first). It's deliberately unopinionated beyond structure:
@@ -195,32 +236,34 @@ delete along with `plugin.json` itself.
    version string) to bust Micro.blog's build cache, then check the
    live test blog. Expect a few minutes' lag between push and rebuild.
 
-## Hugo version caveat: `.Site.Author` → `.Site.Params.author`
+## Hugo version note: `.Site.Author` → `.Site.Params.author`, and why this theme doesn't ship its own feeds
 
-`.Site.Author` was deprecated in Hugo 0.124.0 and **removed in Hugo
-0.141.0** (confirmed as of a Dec 2024 report from someone running
-Micro.blog on Hugo 0.140). `head.html` already uses
-`.Site.Params.author.username` instead, matching current Blank
-source.
+`.Site.Author` was deprecated in Hugo 0.124.0 and removed in Hugo
+0.141.0. `head.html` uses `.Site.Params.author.username` instead,
+matching current Blank source — worth doing in any template you write
+yourself.
 
-The bigger risk was Micro.blog's own built-in RSS, JSON feed, and
-podcast feed templates (inherited from Blank), which reportedly still
-referenced `.Site.Author` as of that report. Rather than depend on
-those being fixed, this theme ships its own overrides so it's
-self-contained regardless of Blank's internal state:
+Earlier drafts of this theme shipped custom `layouts/index.xml` /
+`layouts/index.json` overrides specifically to route around this,
+based on a Dec 2024 report that Micro.blog's own built-in RSS/JSON
+templates still referenced `.Site.Author`. That turned out to be
+unnecessary and actively harmful: per Manton's own Hugo 0.158
+announcement (help.micro.blog, March 2026), **Micro.blog automatically
+rewrites theme layout files that still reference `.Site.Author`** — no
+theme-side fix is required. A Micro.blog team member separately
+confirmed Sumo (which ships no feed templates of its own at all) works
+correctly out of the box on 0.158. Meanwhile, our own custom feed
+templates caused two real, confirmed bugs in production (RSS output
+getting HTML-escaped, traced to redeclaring `outputFormats.RSS` in
+`config.json` — see that note above) that Sumo's hands-off approach
+would never have hit.
 
-| Output format | Public file | Template in this repo |
-|---|---|---|
-| RSS | `feed.xml` | `layouts/index.xml` |
-| JSON | `feed.json` | `layouts/index.json` |
-
-Both use `.Site.Params.author`, not `.Site.Author`. These now live at
-root level to match Blank's own `layouts/index.xml` / `layouts/index.json`
-paths — see the structure note above for why that matters. If you
-later add podcast support, Blank defines those at
-`layouts/list.podcastxml.xml` (→ `podcast.xml`) and
-`layouts/list.podcastjson.json` (→ `podcast.json`), also root-level,
-not under `_default/`.
+So this theme now ships **no** `index.xml` / `index.json` and relies
+entirely on Micro.blog's own ambient feed generation, matching Sumo.
+If you have a genuine reason to customize feed output later (different
+item limit, custom fields), reintroducing `layouts/index.xml` /
+`layouts/index.json` is straightforward — but don't do it defensively
+"just in case" the way this theme originally did.
 
 **Verify this locally** (see workflow below) before trusting it in
 production.
@@ -265,10 +308,20 @@ overhead for a one-off theme project.
 Once you have the right `hugo` (or `hugo-0.158`) in hand:
 
 1. From any Micro.blog dashboard page, use the "..." menu → Export →
-   "Export theme and Markdown". You'll get an emailed link to a zip.
+   "Export theme and Markdown". You'll get an emailed link to a zip —
+   keep its `config.json` (don't commit it to this repo; it contains
+   your personal data). This file carries Micro.blog's full ambient
+   config — output formats, media types, your `title`/`author`/params
+   — which this theme's own minimal `config.json` deliberately
+   doesn't reconstruct (see the `config.json` note above).
 2. Copy the `content/` folder from that export into this repo.
-3. Run `hugo-0.158 serve` (or whatever you named it) and iterate
-   locally with instant reloads.
+3. Run Hugo against the *exported* config, not this repo's own:
+   ```bash
+   hugo-0.158 serve --config /path/to/exported/config.json
+   ```
+   Omitting `--config` uses this repo's minimal `config.json` instead,
+   which will 404 on `/feed.xml`, `/feed.json`, and `/archive/` —
+   expected, not a bug (again, see the note above).
 4. Commit, push, then use the sync button under Design → Edit Themes
    → your theme name to pull the changes into Micro.blog.
 
@@ -276,10 +329,10 @@ Once you have the right `hugo` (or `hugo-0.158`) in hand:
 
 `min_version` in `theme.toml` is set to `0.91` since nothing here uses
 template features newer than that. For the actual **Design → Hugo
-Version** setting on the blog itself, prefer a newer option over 0.91
-where you reasonably can (a couple of relevant security fixes landed
-in later Hugo releases) — but see the `.Site.Author` caveat below
-before jumping all the way to 0.158.
+Version** setting on the blog itself, Micro.blog itself now marks
+0.158 as "(recommended)" as of March 2026 — this theme targets 0.158
+and has been verified working in production at that version. See the
+`.Site.Author` note above for context on what changed getting there.
 
 ## Replies / comments
 
@@ -297,7 +350,7 @@ param (the same checkbox under Posts → Design):
 This renders replies client-side using Micro.blog's own script and
 sanitization — nothing in this theme parses or escapes reply content
 itself. Style it via the `.microblog_conversation`, `.microblog_post`,
-`.microblog_avatar`, `.microblog_time` classes in custom.css.
+`.microblog_avatar`, `.microblog_time` classes in `css/main.css`.
 
 ## Social `rel="me"` links
 
