@@ -9,6 +9,7 @@
 <meta name="description" content="{{ .Site.Params.description | plainify }}">
 {{ end }}
 
+<link rel="stylesheet" href="{{ "css/main.css" | relURL }}?{{ .Site.Params.theme_seconds }}">
 <link rel="stylesheet" href="{{ "custom.css" | relURL }}?{{ .Site.Params.theme_seconds }}">
 
 <link rel="me" href="https://micro.blog/{{ .Site.Params.author.username }}">
