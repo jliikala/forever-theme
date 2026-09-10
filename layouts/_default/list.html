@@ -1,0 +1,3 @@
+{{ define "main" }}
+{{ partial "layout-two-column.html" (dict "page" . "content" (partial "entry-list.html" .)) }}
+{{ end }}

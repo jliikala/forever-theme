@@ -1,0 +1,17 @@
+{{ define "main" }}
+{{ $pages := where .Site.RegularPages "Type" "post" }}
+
+<div class="archive">
+	{{ range $pages.GroupByDate "2006" }}
+	<h2>{{ .Key }}</h2>
+	<ul>
+		{{ range .Pages }}
+		<li>
+			<time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "Jan 2" }}</time>
+			<a href="{{ .Permalink }}">{{ if .Title }}{{ .Title }}{{ else }}{{ .Date.Format "January 2, 2006" }}{{ end }}</a>
+		</li>
+		{{ end }}
+	</ul>
+	{{ end }}
+</div>
+{{ end }}

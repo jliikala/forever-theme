@@ -1,0 +1,10 @@
+<div class="h-card">
+	{{ with .Site.Params.author.avatar }}
+	<img class="u-photo" src="{{ . }}" alt="">
+	{{ end }}
+	<p class="p-name">{{ .Site.Params.author.name | default .Site.Title }}</p>
+	{{ with .Site.Params.description }}
+	<p class="p-note">{{ . }}</p>
+	{{ end }}
+	<a class="u-url" href="{{ .Site.BaseURL }}">{{ .Site.BaseURL }}</a>
+</div>

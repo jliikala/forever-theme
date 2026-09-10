@@ -1,0 +1,25 @@
+<article class="h-entry">
+	{{ if .Title }}
+	<h1 class="p-name">{{ .Title }}</h1>
+	{{ end }}
+
+	<time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+		<a class="u-url" href="{{ .Permalink }}">{{ .Date.Format "January 2, 2006" }}</a>
+	</time>
+
+	<div class="e-content">
+		{{ .Content }}
+	</div>
+
+	{{ with .Params.categories }}
+	<ul class="categories">
+		{{ range . }}
+		<li><a href="{{ "/categories/" | relLangURL }}{{ . | urlize }}/">{{ . }}</a></li>
+		{{ end }}
+	</ul>
+	{{ end }}
+</article>
+
+{{ if .Site.Params.include_conversation }}
+<script type="text/javascript" src="https://micro.blog/conversation.js?url={{ .Permalink }}"></script>
+{{ end }}

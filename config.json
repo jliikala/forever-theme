@@ -1,0 +1,6 @@
+{
+    "paginate": 20,
+    "params": {
+        "sidebar_left": false
+    }
+}

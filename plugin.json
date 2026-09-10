@@ -1,0 +1,12 @@
+{
+    "version": "0.1.0",
+    "title": "Custom Theme",
+    "description": "A minimal starting point for a Micro.blog theme.",
+    "fields": [
+        {
+            "field": "params.sidebar_left",
+            "label": "Move sidebar to the left",
+            "type": "boolean"
+        }
+    ]
+}

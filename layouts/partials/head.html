@@ -1,0 +1,39 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} &ndash; {{ .Site.Title }}{{ end }}</title>
+
+{{ if .Description }}
+<meta name="description" content="{{ .Description }}">
+{{ else if .Site.Params.description }}
+<meta name="description" content="{{ .Site.Params.description }}">
+{{ end }}
+
+<link rel="stylesheet" href="{{ "custom.css" | relURL }}?{{ .Site.Params.theme_seconds }}">
+
+<link rel="me" href="https://micro.blog/{{ .Site.Params.author.username }}">
+{{ with .Site.Params.twitter_username }}
+<link rel="me" href="https://x.com/{{ . }}">
+{{ end }}
+{{ with .Site.Params.github_username }}
+<link rel="me" href="https://github.com/{{ . }}">
+{{ end }}
+{{ with .Site.Params.instagram_username }}
+<link rel="me" href="https://instagram.com/{{ . }}">
+{{ end }}
+
+<link rel="authorization_endpoint" href="https://micro.blog/indieauth/auth">
+<link rel="token_endpoint" href="https://micro.blog/indieauth/token">
+<link rel="micropub" href="https://micro.blog/micropub">
+<link rel="microsub" href="https://micro.blog/microsub">
+<link rel="webmention" href="https://micro.blog/webmention">
+<link rel="subscribe" href="https://micro.blog/users/follow">
+
+<link rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" href="{{ "feed.xml" | absURL }}">
+
+{{ range .Site.Params.plugins_css }}
+<link rel="stylesheet" href="{{ . }}">
+{{ end }}
+{{ range $filename := .Site.Params.plugins_html }}
+{{ partial $filename $ }}
+{{ end }}

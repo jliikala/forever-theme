@@ -1,0 +1,12 @@
+name = "Forever Theme for micro.blog"
+license = "MIT"
+licenselink = "LICENSE"
+description = "A classic blogging theme for Micro.blog."
+homepage = "https://github.com/jliikala/forever-theme"
+tags = ["blog", "microblog"]
+features = []
+min_version = "0.158"
+
+[author]
+  name = "Juha Liikala"
+  homepage = "https://juhaliikala.com"

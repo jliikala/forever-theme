@@ -1,0 +1,14 @@
+{{/*
+	Call with a dict: (dict "page" . "content" (partial "some-partial.html" .))
+	"content" must already be rendered HTML (a partial call result).
+*/}}
+{{ $page := .page }}
+{{ $sidebarLeft := $page.Site.Params.sidebar_left }}
+<div class="layout {{ if $sidebarLeft }}layout--sidebar-left{{ else }}layout--sidebar-right{{ end }}">
+	<div class="content">
+		{{ .content }}
+	</div>
+	<aside class="sidebar">
+		{{ partial "sidebar.html" $page }}
+	</aside>
+</div>
