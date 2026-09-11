@@ -1,5 +1,6 @@
 {{ define "main" }}
 <div class="content">
+	{{ printf "shortsPageLimit raw value: %#v" (index .Site.Params "shortspagelimit") }}
 	{{ partial "entry-single.html" . }}
 	{{ $url := index .Site.Params "shortspageurl" }}
 	{{ if and $url (eq .RelPermalink $url) }}
