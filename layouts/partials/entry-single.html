@@ -7,7 +7,6 @@
 		<a class="u-url" href="{{ .Permalink }}">{{ .Date.Format "January 2, 2006" }}</a>
 	</time>
 
-	{{ $images := findRE "<img[^>]+>" .Content 20 }}
 	{{ $textOnly := replaceRE "<img[^>]+>" "" .Content }}
 	{{ $textOnly = replaceRE "<p>\\s*</p>" "" $textOnly }}
 
@@ -15,17 +14,23 @@
 		{{ $textOnly | safeHTML }}
 	</div>
 
-	{{ if $images }}
-	<div class="entry-gallery u-photo">
-		<div class="entry-gallery-hero">
-			{{ replaceRE "<img" "<img loading=\"lazy\"" (index $images 0) | safeHTML }}
-		</div>
-		{{ if gt (len $images) 1 }}
+	{{ $imageURLs := .Params.images }}
+	{{ if $imageURLs }}
+	{{ $items := slice }}
+	{{ range $i, $src := $imageURLs }}
+		{{ $items = $items | append (dict "src" $src "alt" (printf "Photo %d" (add $i 1))) }}
+	{{ end }}
+
+	<div class="entry-gallery" data-images='{{ $items | jsonify }}'>
+		<a href="#" class="entry-gallery-hero-link">
+			<img src="{{ (index $items 0).src }}" alt="{{ (index $items 0).alt }}" class="entry-gallery-hero-img" loading="lazy">
+		</a>
+		{{ if gt (len $items) 1 }}
 		<div class="entry-gallery-strip">
-			{{ range after 1 $images }}
-			<div class="entry-gallery-thumb">
-				{{ replaceRE "<img" "<img loading=\"lazy\"" . | safeHTML }}
-			</div>
+			{{ range $i, $item := $items }}
+			<button class="entry-gallery-thumb{{ if eq $i 0 }} active{{ end }}" data-index="{{ $i }}" type="button">
+				<img src="{{ $item.src }}" alt="" class="entry-gallery-thumb-img" loading="lazy">
+			</button>
 			{{ end }}
 		</div>
 		{{ end }}

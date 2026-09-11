@@ -14,18 +14,18 @@
 			{{ .Summary | plainify }}
 		</div>
 
-		{{ $images := findRE "<img[^>]+>" .Content 20 }}
-		{{ if $images }}
+		{{ $imageURLs := .Params.images }}
+		{{ if $imageURLs }}
 		<a class="entry-gallery-link" href="{{ .Permalink }}">
 			<div class="entry-gallery u-photo">
 				<div class="entry-gallery-hero">
-					{{ replaceRE "<img" "<img loading=\"lazy\"" (index $images 0) | safeHTML }}
+					<img src="{{ index $imageURLs 0 }}" alt="" loading="lazy">
 				</div>
-				{{ if gt (len $images) 1 }}
+				{{ if gt (len $imageURLs) 1 }}
 				<div class="entry-gallery-strip">
-					{{ range first 8 (after 1 $images) }}
+					{{ range first 8 (after 1 $imageURLs) }}
 					<div class="entry-gallery-thumb">
-						{{ replaceRE "<img" "<img loading=\"lazy\"" . | safeHTML }}
+						<img src="{{ . }}" alt="" loading="lazy">
 					</div>
 					{{ end }}
 				</div>
