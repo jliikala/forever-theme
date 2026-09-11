@@ -1,5 +1,9 @@
 {{ define "main" }}
 <div class="content">
 	{{ partial "entry-single.html" . }}
+	{{ $url := index .Site.Params "shortspageurl" }}
+	{{ if and $url (eq .RelPermalink $url) }}
+	{{ partial "shorts-list.html" . }}
+	{{ end }}
 </div>
 {{ end }}
