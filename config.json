@@ -3,6 +3,6 @@
     "params": {
         "sidebar_left": false,
         "shortsPageURL": "/shorts/",
-        "shortsPageLimit": 2
+        "shortsPageLimit": 4
     }
 }
