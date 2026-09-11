@@ -2,15 +2,13 @@
 {{ $shorts = where $shorts "Title" "eq" "" }}
 {{ $shorts = $shorts.ByDate.Reverse }}
 
-{{ $limit := .Site.Params.shortsPageLimit | default 20 }}
-{{ if gt $limit 0 }}
-	{{ $shorts = first $limit $shorts }}
-{{ end }}
+{{ $batchSize := index .Site.Params "shortspagelimit" }}
+{{ $batchSize = $batchSize | default 20 }}
 
 {{ if $shorts }}
-<div class="post-list h-feed shorts-list">
-	{{ range $shorts }}
-	<article class="h-entry entry-list-item">
+<div class="post-list h-feed shorts-list" data-batch-size="{{ $batchSize }}">
+	{{ range $i, $short := $shorts }}
+	<article class="h-entry entry-list-item shorts-item"{{ if ge $i $batchSize }} hidden{{ end }}>
 		<time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
 			<a class="u-url" href="{{ .Permalink }}">{{ .Date.Format "January 2, 2006" }}</a>
 		</time>
@@ -20,5 +18,29 @@
 		</div>
 	</article>
 	{{ end }}
+
+	{{ if gt (len $shorts) $batchSize }}
+	<button type="button" class="shorts-show-more" id="shorts-show-more">Show more</button>
+	{{ end }}
 </div>
+
+<script>
+(function () {
+	var container = document.querySelector('.shorts-list');
+	var btn = document.getElementById('shorts-show-more');
+	if (!container || !btn) return;
+
+	var batchSize = parseInt(container.dataset.batchSize, 10) || 20;
+
+	btn.addEventListener('click', function () {
+		var hiddenItems = container.querySelectorAll('.shorts-item[hidden]');
+		Array.prototype.slice.call(hiddenItems, 0, batchSize).forEach(function (el) {
+			el.removeAttribute('hidden');
+		});
+		if (!container.querySelector('.shorts-item[hidden]')) {
+			btn.remove();
+		}
+	});
+})();
+</script>
 {{ end }}
