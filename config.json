@@ -1,7 +1,7 @@
 {
     "paginate": 20,
     "params": {
-        "sidebar_left": true,
+        "sidebar_left": false,
         "shortsPageURL": "/shorts/",
         "shortsPageLimit": 4
     }
