@@ -3,9 +3,11 @@
 	<h1 class="p-name">{{ .Title }}</h1>
 	{{ end }}
 
+	{{ if eq .Type "post" }}
 	<time class="dt-published" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
 		<a class="u-url" href="{{ .Permalink }}">{{ .Date.Format "January 2, 2006" }}</a>
 	</time>
+	{{ end }}
 
 	{{ $textOnly := replaceRE "<img[^>]+>" "" .Content }}
 	{{ $textOnly = replaceRE "<p>\\s*</p>" "" $textOnly }}
