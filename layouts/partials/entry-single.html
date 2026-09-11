@@ -7,9 +7,30 @@
 		<a class="u-url" href="{{ .Permalink }}">{{ .Date.Format "January 2, 2006" }}</a>
 	</time>
 
+	{{ $images := findRE "<img[^>]+>" .Content 20 }}
+	{{ $textOnly := replaceRE "<img[^>]+>" "" .Content }}
+	{{ $textOnly = replaceRE "<p>\\s*</p>" "" $textOnly }}
+
 	<div class="e-content">
-		{{ .Content }}
+		{{ $textOnly | safeHTML }}
 	</div>
+
+	{{ if $images }}
+	<div class="entry-gallery u-photo">
+		<div class="entry-gallery-hero">
+			{{ replaceRE "<img" "<img loading=\"lazy\"" (index $images 0) | safeHTML }}
+		</div>
+		{{ if gt (len $images) 1 }}
+		<div class="entry-gallery-strip">
+			{{ range after 1 $images }}
+			<div class="entry-gallery-thumb">
+				{{ replaceRE "<img" "<img loading=\"lazy\"" . | safeHTML }}
+			</div>
+			{{ end }}
+		</div>
+		{{ end }}
+	</div>
+	{{ end }}
 
 	{{ with .Params.categories }}
 	<ul class="categories">
