@@ -10,16 +10,29 @@
 
 		<h2 class="p-name"><a class="u-url" href="{{ .Permalink }}">{{ .Title }}</a></h2>
 
-		{{ $lead := findRE "<img[^>]+>" .Content 1 }}
-		{{ if $lead }}
-		<a class="entry-thumb-link u-photo" href="{{ .Permalink }}">
-			<div class="entry-thumb">{{ index $lead 0 | safeHTML }}</div>
-		</a>
-		{{ end }}
-
 		<div class="e-content p-summary">
 			{{ .Summary | plainify }}
 		</div>
+
+		{{ $images := findRE "<img[^>]+>" .Content 20 }}
+		{{ if $images }}
+		<a class="entry-gallery-link" href="{{ .Permalink }}">
+			<div class="entry-gallery u-photo">
+				<div class="entry-gallery-hero">
+					{{ replaceRE "<img" "<img loading=\"lazy\"" (index $images 0) | safeHTML }}
+				</div>
+				{{ if gt (len $images) 1 }}
+				<div class="entry-gallery-strip">
+					{{ range first 8 (after 1 $images) }}
+					<div class="entry-gallery-thumb">
+						{{ replaceRE "<img" "<img loading=\"lazy\"" . | safeHTML }}
+					</div>
+					{{ end }}
+				</div>
+				{{ end }}
+			</div>
+		</a>
+		{{ end }}
 	</article>
 	{{ end }}
 </div>
