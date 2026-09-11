@@ -191,6 +191,109 @@ header {
 	border-radius: 0.2rem;
 }
 
+/* Interactive post gallery (single post page)
+   -------------------------------------------------------------- */
+
+.entry-gallery-hero-link {
+	display: block;
+	overflow: hidden;
+	border-radius: 0.25rem;
+	aspect-ratio: 3 / 2;
+	cursor: zoom-in;
+	margin-top: 1rem;
+}
+
+.entry-gallery-hero-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform 0.2s;
+}
+
+.entry-gallery-hero-link:hover .entry-gallery-hero-img {
+	transform: scale(1.02);
+}
+
+.entry-gallery-strip {
+	display: flex;
+	gap: 0.25rem;
+	margin-top: 0.25rem;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+
+.entry-gallery-strip::-webkit-scrollbar {
+	display: none;
+}
+
+.entry-gallery-thumb {
+	flex: 0 0 5rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	overflow: hidden;
+	border-radius: 0.2rem;
+	aspect-ratio: 1 / 1;
+	opacity: 0.45;
+	transition: opacity 0.2s;
+}
+
+.entry-gallery-thumb.active,
+.entry-gallery-thumb:hover {
+	opacity: 1;
+}
+
+.entry-gallery-thumb-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+/* Shared lightbox
+   -------------------------------------------------------------- */
+
+.entry-gallery-lightbox {
+	display: none;
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.92);
+	z-index: 9999;
+	align-items: center;
+	justify-content: center;
+}
+
+.entry-gallery-lightbox.open {
+	display: flex;
+}
+
+.entry-gallery-lightbox-img {
+	max-width: 92vw;
+	max-height: 92vh;
+	object-fit: contain;
+	border-radius: 0.25rem;
+	transition: opacity 0.15s ease;
+}
+
+.entry-gallery-lightbox-close {
+	position: absolute;
+	top: 1rem;
+	right: 1.25rem;
+	background: none;
+	border: none;
+	color: #fff;
+	font-size: 1.375rem;
+	cursor: pointer;
+	opacity: 0.7;
+	line-height: 1;
+}
+
+.entry-gallery-lightbox-close:hover {
+	opacity: 1;
+}
+
 /* Sidebar h-card
    -------------------------------------------------------------- */
 
